@@ -52,22 +52,47 @@ function App() {
     }
   };
 
-  const inviaScelta = async (offerta) => {
+    const inviaScelta = async (offerta) => {
     setLoading(true);
-    const indirizzoFornitura = isStessaResidenza ? residenza : luogoFornitura;
-
-    const datiCompleti = {
-      dati_utente: {
-        tipo_fornitura: tipoFornitura,
-        nome, cognome, email, telefono, codice_fiscale: codiceFiscale,
-        residenza: residenza,
-        luogo_fornitura: indirizzoFornitura,
-        pod: pod,
-        pdr: pdr
-      },
+    
+    const payload = {
+      tipo_fornitura: tipoFornitura,
+      nome, cognome, email, telefono, codice_fiscale: codiceFiscale,
+      residenza: residenza,
+      luogo_fornitura: isStessaResidenza ? residenza : luogoFornitura,
+      pod: pod,
+      pdr: pdr,
       offerta_scelta: `${offerta.fornitore} - ${offerta.offerta}`
     };
 
+    try {
+      // CHIAMATA DIRETTA A SUPABASE (Saltiamo Render!)
+      const response = await fetch('https://bqyyhpmxatvuxvlnwdwp.supabase.co/rest/v1/lead_scelte', {
+        method: 'POST',
+        headers: {
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxeXlocG14YXZ0dXZ4bG5vd2RwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5NTA5NTc1OCwiZXhwIjoyMTEwNjcxNzU4fQ.Jgdn4QNHBJEwCD-A1jInJtOG5D-8OxRJRzbjKPI7o6E',
+          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxeXlocG14YXZ0dXZ4bG5vd2RwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5NTA5NTc1OCwiZXhwIjoyMTEwNjcxNzU4fQ.Jgdn4QNHBJEwCD-A1jInJtOG5D-8OxRJRzbjKPI7o6E',
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        setSuccesso(true);
+        setRisultati(null);
+      } else {
+        const erroreDettaglio = await response.text();
+        console.error("Errore Supabase:", erroreDettaglio);
+        setErrore("Errore durante il salvataggio: " + erroreDettaglio);
+      }
+    } catch (error) {
+      console.error("Errore di rete:", error);
+      setErrore("Errore di connessione al database.");
+    } finally {
+      setLoading(false);
+    }
+  };
     try {
       await fetch('https://comparafacile-backend.onrender.com/scegli', {
         method: 'POST',
