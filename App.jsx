@@ -38,7 +38,7 @@ function App() {
     };
 
     try {
-      const risposta = await fetch('http://127.0.0.1:8000/confronta', {
+      const risposta = await fetch('https://comparafacile-backend.onrender.com/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(datiUtente),
@@ -69,7 +69,7 @@ function App() {
     };
 
     try {
-      await fetch('http://127.0.0.1:8000/scegli', {
+      await fetch('https://comparafacile-backend.onrender.com/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(datiCompleti),
