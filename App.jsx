@@ -1,8 +1,7 @@
 import { useState } from 'react';
 
 function App() {
-  // Nuovi stati per la pratica e il tipo cliente
-  const [tipoPratica, setTipoPratica] = useState('switch');
+  const [tipoPratica, setTipoPratica] = useState('Switch');
   const [tipoCliente, setTipoCliente] = useState('privato');
   const [tipoFornitura, setTipoFornitura] = useState('duale');
   
@@ -36,12 +35,10 @@ function App() {
       tipo_cliente: tipoCliente,
       tipo_fornitura: tipoFornitura,
       nome, cognome, email, telefono, codice_fiscale: codiceFiscale,
-      ragione_sociale: ragioneSociale,
-      partita_iva: partitaIva,
+      ragione_sociale: ragioneSociale, partita_iva: partitaIva,
       residenza: residenza,
       luogo_fornitura: isStessaResidenza ? residenza : luogoFornitura,
-      pod: pod,
-      pdr: pdr
+      pod: pod, pdr: pdr
     };
 
     try {
@@ -64,16 +61,12 @@ function App() {
     setErrore(null);
     
     const payload = {
-      tipo_pratica: tipoPratica,
-      tipo_cliente: tipoCliente,
-      tipo_fornitura: tipoFornitura,
+      tipo_pratica: tipoPratica, tipo_cliente: tipoCliente, tipo_fornitura: tipoFornitura,
       nome, cognome, email, telefono, codice_fiscale: codiceFiscale,
-      ragione_sociale: ragioneSociale,
-      partita_iva: partitaIva,
+      ragione_sociale: ragioneSociale, partita_iva: partitaIva,
       residenza: residenza,
       luogo_fornitura: isStessaResidenza ? residenza : luogoFornitura,
-      pod: pod,
-      pdr: pdr,
+      pod: pod, pdr: pdr,
       offerta_scelta: `${offerta.fornitore} - ${offerta.offerta}`
     };
 
@@ -94,7 +87,8 @@ function App() {
         setRisultati(null);
       } else {
         const erroreDettaglio = await response.text();
-        setErrore("Errore salvataggio DB: " + erroreDettaglio);
+        console.error("Errore Supabase:", erroreDettaglio);
+        setErrore("Errore salvataggio DB. Controlla la console. " + erroreDettaglio);
       }
     } catch (error) {
       setErrore("Errore di connessione al database.");
@@ -104,38 +98,39 @@ function App() {
   };
 
   const s = {
-    body: { backgroundColor: '#0f172a', minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif', display: 'flex', flexDirection: 'column' },
-    nav: { padding: '20px 0', textAlign: 'center', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px' },
-    logoText: { fontSize: '26px', fontWeight: '800', letterSpacing: '-0.5px', color: '#ffffff', margin: 0 },
-    logoDot: { color: '#3b82f6' },
-    mainContainer: { flex: 1, display: 'flex', justifyContent: 'center', padding: '20px 20px 60px 20px' },
-    card: { width: '100%', maxWidth: '700px', backgroundColor: '#ffffff', borderRadius: '20px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)', padding: '40px', boxSizing: 'border-box' },
-    title: { fontSize: '24px', fontWeight: '700', color: '#111827', marginTop: 0, marginBottom: '8px' },
-    subtitle: { fontSize: '15px', color: '#6b7280', marginTop: 0, marginBottom: '32px' },
-    sectionTitle: { fontSize: '14px', fontWeight: '600', color: '#111827', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '16px', marginTop: '28px', borderBottom: '1px solid #e5e7eb', paddingBottom: '8px' },
+    body: { background: 'linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%)', minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif', display: 'flex', flexDirection: 'column' },
+    nav: { backgroundColor: '#ffffff', padding: '15px 20px', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', gap: '10px' },
+    logoText: { fontSize: '22px', fontWeight: '800', color: '#111827', margin: 0 },
+    logoDot: { color: '#10b981' }, // Verde smeraldo
+    mainContainer: { flex: 1, display: 'flex', justifyContent: 'center', padding: '40px 20px' },
+    card: { width: '100%', maxWidth: '750px', backgroundColor: '#ffffff', borderRadius: '24px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.1)', padding: '40px', boxSizing: 'border-box' },
+    title: { fontSize: '28px', fontWeight: '800', color: '#111827', marginTop: 0, marginBottom: '8px', textAlign: 'center' },
+    subtitle: { fontSize: '16px', color: '#6b7280', marginTop: 0, marginBottom: '32px', textAlign: 'center' },
+    sectionTitle: { fontSize: '13px', fontWeight: '700', color: '#10b981', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px', marginTop: '30px', borderBottom: '1px solid #f3f4f6', paddingBottom: '8px' },
     inputGroup: { marginBottom: '16px' },
-    label: { display: 'block', fontSize: '14px', fontWeight: '500', color: '#111827', marginBottom: '6px' },
-    input: { width: '100%', padding: '12px 14px', borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '15px', color: '#111827', boxSizing: 'border-box', backgroundColor: '#f9fafb' },
+    label: { display: 'block', fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '6px' },
+    input: { width: '100%', padding: '14px 16px', borderRadius: '10px', border: '1px solid #d1d5db', fontSize: '15px', color: '#111827', boxSizing: 'border-box', backgroundColor: '#f9fafb', outline: 'none', transition: 'border 0.2s' },
     row: { display: 'flex', gap: '16px' },
     col: { flex: 1 },
     checkboxGroup: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', cursor: 'pointer' },
-    btnPrimary: { width: '100%', padding: '16px', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', fontSize: '16px', fontWeight: '600', cursor: 'pointer', marginTop: '24px' },
-    table: { width: '100%', borderCollapse: 'collapse', marginTop: '16px' },
-    th: { padding: '12px', textAlign: 'left', fontSize: '13px', fontWeight: '600', color: '#6b7280', borderBottom: '1px solid #e5e7eb', textTransform: 'uppercase' },
-    td: { padding: '16px 12px', fontSize: '15px', color: '#111827', borderBottom: '1px solid #e5e7eb' },
-    btnScegli: { backgroundColor: '#111827', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' },
+    btnPrimary: { width: '100%', padding: '18px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '10px', fontSize: '16px', fontWeight: '700', cursor: 'pointer', marginTop: '24px', boxShadow: '0 10px 15px -3px rgba(16, 185, 129, 0.3)' },
+    // Stili per la tabella/card delle offerte
+    offerCard: { border: '2px solid #f3f4f6', borderRadius: '16px', padding: '20px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'all 0.3s', backgroundColor: '#fff' },
+    offerBest: { border: '2px solid #10b981', backgroundColor: '#f0fdf4', position: 'relative' },
+    badgeBest: { position: 'absolute', top: '-12px', left: '20px', backgroundColor: '#10b981', color: 'white', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold' },
+    btnScegli: { backgroundColor: '#111827', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '8px', fontSize: '15px', fontWeight: '600', cursor: 'pointer' },
     successBox: { textAlign: 'center', padding: '40px 20px' },
-    successIcon: { width: '64px', height: '64px', backgroundColor: '#ecfdf5', color: '#10b981', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px auto' },
-    error: { backgroundColor: '#fef2f2', color: '#b91c1c', padding: '12px', borderRadius: '8px', fontSize: '14px', marginBottom: '20px', border: '1px solid #fecaca' },
-    radioGroup: { display: 'flex', gap: '20px', marginBottom: '20px' },
-    radioLabel: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }
+    successIcon: { width: '80px', height: '80px', backgroundColor: '#ecfdf5', color: '#10b981', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px auto' },
+    error: { backgroundColor: '#fef2f2', color: '#b91c1c', padding: '16px', borderRadius: '8px', fontSize: '14px', marginBottom: '20px', border: '1px solid #fecaca', fontWeight: '500' },
+    radioGroup: { display: 'flex', gap: '20px', marginBottom: '20px', backgroundColor: '#f9fafb', padding: '15px', borderRadius: '10px' },
+    radioLabel: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', fontWeight: '600', cursor: 'pointer', color: '#374151' }
   };
 
   return (
     <div style={s.body}>
       <nav style={s.nav}>
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="#3b82f6" />
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="#10b981" />
         </svg>
         <h1 style={s.logoText}>Compara<span style={s.logoDot}>Facile</span></h1>
       </nav>
@@ -147,14 +142,15 @@ function App() {
           {successo ? (
             <div style={s.successBox}>
               <div style={s.successIcon}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
               </div>
-              <h2 style={{...s.title, marginBottom: '12px'}}>Richiesta Ricevuta!</h2>
-              <p style={{ color: '#6b7280', fontSize: '16px', lineHeight: '1.5', marginBottom: '32px' }}>
-                Grazie <strong>{tipoCliente === 'azienda' ? ragioneSociale : nome}</strong>, abbiamo registrato la tua richiesta di <strong>{tipoPratica}</strong>.<br/>
-                Un nostro consulente ti contatterà <strong>entro 48 ore</strong> ai recapiti forniti.
+              <h2 style={{...s.title, color: '#065f46'}}>Richiesta Ricevuta!</h2>
+              <p style={{ color: '#6b7280', fontSize: '16px', lineHeight: '1.6', marginBottom: '32px' }}>
+                Grazie <strong>{tipoCliente === 'azienda' ? ragioneSociale : nome}</strong>,<br/>
+                abbiamo registrato la tua richiesta di <strong>{tipoPratica}</strong>.<br/>
+                Un nostro consulente ti contatterà <strong>entro 48 ore</strong>.
               </p>
-              <button onClick={() => window.location.reload()} style={{...s.btnPrimary, backgroundColor: '#e5e7eb', color: '#111827'}}>Torna alla home</button>
+              <button onClick={() => window.location.reload()} style={{...s.btnPrimary, backgroundColor: '#111827', boxShadow: 'none'}}>Torna alla home</button>
             </div>
           ) : (
             <>
@@ -162,9 +158,7 @@ function App() {
               <p style={s.subtitle}>Scopri in 1 minuto come risparmiare su luce, gas e fibra.</p>
 
               <form onSubmit={gestisciInvio}>
-                
-                {/* TIPO DI PRATICA */}
-                <div style={s.sectionTitle}>Cosa devi fare?</div>
+                <div style={s.sectionTitle}>1. Cosa devi fare?</div>
                 <div style={s.inputGroup}>
                   <select style={s.input} value={tipoPratica} onChange={(e) => setTipoPratica(e.target.value)}>
                     <option value="Switch">Switch (Cambio Fornitore)</option>
@@ -174,8 +168,7 @@ function App() {
                   </select>
                 </div>
 
-                {/* TIPO CLIENTE */}
-                <div style={s.sectionTitle}>Tipo di Cliente</div>
+                <div style={s.sectionTitle}>2. Tipo di Cliente</div>
                 <div style={s.radioGroup}>
                   <label style={s.radioLabel}>
                     <input type="radio" value="privato" checked={tipoCliente === 'privato'} onChange={() => setTipoCliente('privato')} />
@@ -187,8 +180,7 @@ function App() {
                   </label>
                 </div>
 
-                <div style={s.sectionTitle}>Dati Anagrafici</div>
-                
+                <div style={s.sectionTitle}>3. Dati Anagrafici</div>
                 {tipoCliente === 'azienda' ? (
                   <div style={s.row}>
                     <div style={{...s.inputGroup, ...s.col}}>
@@ -237,7 +229,7 @@ function App() {
                   </div>
                 </div>
 
-                <div style={s.sectionTitle}>Dettagli Fornitura</div>
+                <div style={s.sectionTitle}>4. Dettagli Fornitura</div>
                 <div style={s.inputGroup}>
                   <label style={s.label}>Cosa vuoi confrontare?</label>
                   <select style={s.input} value={tipoFornitura} onChange={(e) => setTipoFornitura(e.target.value)}>
@@ -252,7 +244,7 @@ function App() {
                   <>
                     <div style={s.checkboxGroup} onClick={() => setIsStessaResidenza(!isStessaResidenza)}>
                       <input type="checkbox" checked={isStessaResidenza} onChange={() => {}} style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
-                      <label style={{...s.label, marginBottom: 0, cursor: 'pointer' }}>Il luogo di fornitura coincide con la sede/residenza</label>
+                      <label style={{...s.label, marginBottom: 0, cursor: 'pointer'}}>Il luogo di fornitura coincide con la sede/residenza</label>
                     </div>
 
                     {!isStessaResidenza && (
@@ -284,33 +276,29 @@ function App() {
                 </button>
               </form>
 
+              {/* LISTA OFFERTE (Nuovo Stile a Card) */}
               {risultati && (
                 <div style={{ marginTop: '40px' }}>
-                  <h3 style={{ fontSize: '18px', color: '#111827', marginBottom: '8px' }}>Offerte disponibili</h3>
-                  <table style={s.table}>
-                    <thead>
-                      <tr>
-                        <th style={s.th}>Fornitore</th>
-                        <th style={s.th}>Offerta</th>
-                        <th style={s.th}>{tipoFornitura === 'fibra' ? 'Costo' : 'Luce'}</th>
-                        {tipoFornitura !== 'fibra' && <th style={s.th}>Gas</th>}
-                        <th style={s.th}></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {risultati.map((offerta, indice) => (
-                        <tr key={indice}>
-                          <td style={s.td}><strong>{offerta.fornitore}</strong></td>
-                          <td style={s.td}>{offerta.offerta}</td>
-                          <td style={s.td}>{offerta.prezzo1}</td>
-                          {tipoFornitura !== 'fibra' && <td style={s.td}>{offerta.prezzo2}</td>}
-                          <td style={s.td}>
-                            <button onClick={() => inviaScelta(offerta)} style={s.btnScegli}>Scegli</button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <h3 style={{ fontSize: '20px', color: '#111827', marginBottom: '20px', textAlign: 'center' }}>Le migliori offerte per te</h3>
+                  
+                  {risultati.map((offerta, indice) => (
+                    <div key={indice} style={indice === 0 ? {...s.offerCard, ...s.offerBest} : s.offerCard}>
+                      {indice === 0 && <div style={s.badgeBest}>MIGLIORE OFFERTA</div>}
+                      
+                      <div>
+                        <h4 style={{ margin: '0 0 5px 0', fontSize: '18px', color: '#111827' }}>{offerta.fornitore}</h4>
+                        <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>{offerta.offerta}</p>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: '18px', fontWeight: '800', color: '#059669' }}>{offerta.prezzo1}</div>
+                          {tipoFornitura !== 'fibra' && <div style={{ fontSize: '14px', color: '#6b7280' }}>{offerta.prezzo2}</div>}
+                        </div>
+                        <button onClick={() => inviaScelta(offerta)} style={s.btnScegli}>Scegli</button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </>
