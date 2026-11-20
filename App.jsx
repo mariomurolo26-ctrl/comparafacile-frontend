@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 const BACKEND_URL = 'https://comparafacile-backend.onrender.com';
-const SUPABASE_URL = 'https://bqyyhpmxatvuxvlnwdwp.supabase.co';
+const SUPABASE_URL = 'https://bqyyhpmxavtuvxlnowdp.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxeXlocG14YXZ0dXZ4bG5vd2RwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUwOTU3NTgsImV4cCI6MjExMDY3MTc1OH0.pkBektrwI8yZE0f1SvW6RHMePqNGYLqkq5XAj_h1Qps';
 
 function App() {
