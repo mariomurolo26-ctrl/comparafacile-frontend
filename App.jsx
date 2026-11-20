@@ -125,6 +125,8 @@ try {
       pdr,
       nome_file_bolletta: fileUrl,
       offerta_scelta: `${offerta.fornitore} - ${offerta.offerta} (${offerta.prezzo})`
+      privacy_accettata: privacyAccettata,
+      consenso_marketing: consensoMarketing
     };
 
     try {
@@ -314,6 +316,32 @@ try {
                   </div>
                 )}
 
+                <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px', color: theme.textMuted }}>
+  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', lineHeight: '1.4' }}>
+    <input 
+      type="checkbox" 
+      checked={privacyAccettata} 
+      onChange={(e) => setPrivacyAccettata(e.target.checked)} 
+      required 
+      style={{ marginTop: '3px', accentColor: theme.primary }}
+    />
+    <span>
+      Dichiaro di aver letto l'<strong>Informativa sulla Privacy</strong> e acconsento al trattamento dei dati per la gestione della richiesta di confronto e attivazione. *
+    </span>
+  </label>
+
+  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', lineHeight: '1.4' }}>
+    <input 
+      type="checkbox" 
+      checked={consensoMarketing} 
+      onChange={(e) => setConsensoMarketing(e.target.checked)} 
+      style={{ marginTop: '3px', accentColor: theme.primary }}
+    />
+    <span>
+      Acconsento all'invio di offerte commerciali e promozioni future via email/telefono (facoltativo).
+    </span>
+  </label>
+</div>
                 <button type="submit" disabled={loading} style={s.btnPrimary}>
                   {loading ? 'Analisi in corso...' : 'Confronta Offerte'}
                 </button>
