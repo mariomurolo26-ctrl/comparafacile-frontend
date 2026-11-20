@@ -50,17 +50,24 @@ function App() {
       pdr
     };
 
-    try {
+try {
       const risposta = await fetch(`${BACKEND_URL}/confronta`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(datiUtente),
       });
-      if (!risposta.ok) throw new Error("Errore dal server");
       const dati = await risposta.json();
+      if (!risposta.ok) {
+        setErrore("Errore dal backend: " + (dati.detail || "Errore sconosciuto"));
+        return;
+      }
+      if (!dati.risultati || dati.risultati.length === 0) {
+        setErrore("Nessuna offerta trovata su Supabase per questa categoria (controlla 'attiva=true' e 'tipo_fornitura').");
+        return;
+      }
       setRisultati(dati.risultati);
     } catch (error) {
-      setErrore("Il server su Render si sta avviando (ci mette circa 30 secondi al primo avvio). Riprova tra poco.");
+      setErrore("Il server su Render si sta avviando (ci mette circa 50 secondi). Riprova tra poco.");
     } finally {
       setLoading(false);
     }
