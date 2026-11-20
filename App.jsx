@@ -1,14 +1,19 @@
 import { useState } from 'react';
 
 function App() {
+  // Nuovi stati per la pratica e il tipo cliente
+  const [tipoPratica, setTipoPratica] = useState('switch');
+  const [tipoCliente, setTipoCliente] = useState('privato');
   const [tipoFornitura, setTipoFornitura] = useState('duale');
+  
   const [nome, setNome] = useState('');
   const [cognome, setCognome] = useState('');
   const [email, setEmail] = useState('');
   const [telefono, setTelefono] = useState('');
   const [codiceFiscale, setCodiceFiscale] = useState('');
-  
-  // Nuovi campi
+  const [ragioneSociale, setRagioneSociale] = useState('');
+  const [partitaIva, setPartitaIva] = useState('');
+
   const [residenza, setResidenza] = useState('');
   const [luogoFornitura, setLuogoFornitura] = useState('');
   const [isStessaResidenza, setIsStessaResidenza] = useState(true);
@@ -26,13 +31,15 @@ function App() {
     setErrore(null);
     setRisultati(null);
 
-    const indirizzoFornitura = isStessaResidenza ? residenza : luogoFornitura;
-
     const datiUtente = {
+      tipo_pratica: tipoPratica,
+      tipo_cliente: tipoCliente,
       tipo_fornitura: tipoFornitura,
       nome, cognome, email, telefono, codice_fiscale: codiceFiscale,
+      ragione_sociale: ragioneSociale,
+      partita_iva: partitaIva,
       residenza: residenza,
-      luogo_fornitura: indirizzoFornitura,
+      luogo_fornitura: isStessaResidenza ? residenza : luogoFornitura,
       pod: pod,
       pdr: pdr
     };
@@ -46,18 +53,23 @@ function App() {
       const dati = await risposta.json();
       setRisultati(dati.risultati);
     } catch (error) {
-      setErrore("Errore di connessione. Assicurati che il server Python sia acceso.");
+      setErrore("Il server ci sta mettendo troppo tempo a svegliarsi. Riprova tra 30 secondi.");
     } finally {
       setLoading(false);
     }
   };
 
-    const inviaScelta = async (offerta) => {
+  const inviaScelta = async (offerta) => {
     setLoading(true);
+    setErrore(null);
     
     const payload = {
+      tipo_pratica: tipoPratica,
+      tipo_cliente: tipoCliente,
       tipo_fornitura: tipoFornitura,
       nome, cognome, email, telefono, codice_fiscale: codiceFiscale,
+      ragione_sociale: ragioneSociale,
+      partita_iva: partitaIva,
       residenza: residenza,
       luogo_fornitura: isStessaResidenza ? residenza : luogoFornitura,
       pod: pod,
@@ -66,12 +78,11 @@ function App() {
     };
 
     try {
-      // CHIAMATA DIRETTA A SUPABASE (Saltiamo Render!)
       const response = await fetch('https://bqyyhpmxatvuxvlnwdwp.supabase.co/rest/v1/lead_scelte', {
         method: 'POST',
         headers: {
           'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxeXlocG14YXZ0dXZ4bG5vd2RwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5NTA5NTc1OCwiZXhwIjoyMTEwNjcxNzU4fQ.Jgdn4QNHBJEwCD-A1jInJtOG5D-8OxRJRzbjKPI7o6E',
-          'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxeXlocG14YXZ0dXZ4bG5vd2RwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5NTA5NTc1OCwiZXhwIjoyMTEwNjcxNzU4fQ.Jgdn4QNHBJEwCD-A1jInJtOG5D-8OxRJRzbjKPI7o6E',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxeXlocG14YXZ0dXZ4bG5vd2RwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5NTA5NTc1OCwiZXhwIjoyMTEwNjcxNzU4fQ.Jgdn4QNHBJEwCD-A1jInJtOG5D-8OxRJRzbjKPI7o6E',
           'Content-Type': 'application/json',
           'Prefer': 'return=minimal'
         },
@@ -83,71 +94,49 @@ function App() {
         setRisultati(null);
       } else {
         const erroreDettaglio = await response.text();
-        console.error("Errore Supabase:", erroreDettaglio);
-        setErrore("Errore durante il salvataggio: " + erroreDettaglio);
+        setErrore("Errore salvataggio DB: " + erroreDettaglio);
       }
     } catch (error) {
-      console.error("Errore di rete:", error);
       setErrore("Errore di connessione al database.");
     } finally {
       setLoading(false);
     }
   };
-    try {
-      await fetch('https://comparafacile-backend.onrender.com/scegli', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(datiCompleti),
-      });
-      setSuccesso(true);
-      setRisultati(null);
-    } catch (error) {
-      setErrore("Errore nell'invio. Riprova.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // STILI MINIMAL
-  const theme = {
-    bg: '#f3f4f6',
-    cardBg: '#ffffff',
-    primary: '#4f46e5',
-    textMain: '#111827',
-    textMuted: '#6b7280',
-    border: '#e5e7eb'
-  };
 
   const s = {
-    body: { backgroundColor: theme.bg, minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif', display: 'flex', flexDirection: 'column' },
-    nav: { backgroundColor: theme.cardBg, padding: '20px 0', borderBottom: `1px solid ${theme.border}`, textAlign: 'center' },
-    logoText: { fontSize: '24px', fontWeight: '800', letterSpacing: '-0.5px', color: theme.textMain, margin: 0 },
-    logoDot: { color: theme.primary },
-    mainContainer: { flex: 1, display: 'flex', justifyContent: 'center', padding: '40px 20px' },
-    card: { width: '100%', maxWidth: '700px', backgroundColor: theme.cardBg, borderRadius: '16px', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05)', padding: '40px', boxSizing: 'border-box' },
-    title: { fontSize: '24px', fontWeight: '700', color: theme.textMain, marginTop: 0, marginBottom: '8px' },
-    subtitle: { fontSize: '15px', color: theme.textMuted, marginTop: 0, marginBottom: '32px' },
-    sectionTitle: { fontSize: '14px', fontWeight: '600', color: theme.textMain, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '16px', marginTop: '28px', borderBottom: `1px solid ${theme.border}`, paddingBottom: '8px' },
+    body: { backgroundColor: '#0f172a', minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif', display: 'flex', flexDirection: 'column' },
+    nav: { padding: '20px 0', textAlign: 'center', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px' },
+    logoText: { fontSize: '26px', fontWeight: '800', letterSpacing: '-0.5px', color: '#ffffff', margin: 0 },
+    logoDot: { color: '#3b82f6' },
+    mainContainer: { flex: 1, display: 'flex', justifyContent: 'center', padding: '20px 20px 60px 20px' },
+    card: { width: '100%', maxWidth: '700px', backgroundColor: '#ffffff', borderRadius: '20px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)', padding: '40px', boxSizing: 'border-box' },
+    title: { fontSize: '24px', fontWeight: '700', color: '#111827', marginTop: 0, marginBottom: '8px' },
+    subtitle: { fontSize: '15px', color: '#6b7280', marginTop: 0, marginBottom: '32px' },
+    sectionTitle: { fontSize: '14px', fontWeight: '600', color: '#111827', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '16px', marginTop: '28px', borderBottom: '1px solid #e5e7eb', paddingBottom: '8px' },
     inputGroup: { marginBottom: '16px' },
-    label: { display: 'block', fontSize: '14px', fontWeight: '500', color: theme.textMain, marginBottom: '6px' },
-    input: { width: '100%', padding: '12px 14px', borderRadius: '8px', border: `1px solid ${theme.border}`, fontSize: '15px', color: theme.textMain, boxSizing: 'border-box', backgroundColor: '#f9fafb' },
+    label: { display: 'block', fontSize: '14px', fontWeight: '500', color: '#111827', marginBottom: '6px' },
+    input: { width: '100%', padding: '12px 14px', borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '15px', color: '#111827', boxSizing: 'border-box', backgroundColor: '#f9fafb' },
     row: { display: 'flex', gap: '16px' },
     col: { flex: 1 },
     checkboxGroup: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', cursor: 'pointer' },
-    btnPrimary: { width: '100%', padding: '16px', backgroundColor: theme.primary, color: 'white', border: 'none', borderRadius: '8px', fontSize: '16px', fontWeight: '600', cursor: 'pointer', marginTop: '24px' },
+    btnPrimary: { width: '100%', padding: '16px', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', fontSize: '16px', fontWeight: '600', cursor: 'pointer', marginTop: '24px' },
     table: { width: '100%', borderCollapse: 'collapse', marginTop: '16px' },
-    th: { padding: '12px', textAlign: 'left', fontSize: '13px', fontWeight: '600', color: theme.textMuted, borderBottom: `1px solid ${theme.border}`, textTransform: 'uppercase' },
-    td: { padding: '16px 12px', fontSize: '15px', color: theme.textMain, borderBottom: `1px solid ${theme.border}` },
-    btnScegli: { backgroundColor: theme.textMain, color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' },
+    th: { padding: '12px', textAlign: 'left', fontSize: '13px', fontWeight: '600', color: '#6b7280', borderBottom: '1px solid #e5e7eb', textTransform: 'uppercase' },
+    td: { padding: '16px 12px', fontSize: '15px', color: '#111827', borderBottom: '1px solid #e5e7eb' },
+    btnScegli: { backgroundColor: '#111827', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' },
     successBox: { textAlign: 'center', padding: '40px 20px' },
     successIcon: { width: '64px', height: '64px', backgroundColor: '#ecfdf5', color: '#10b981', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px auto' },
-    error: { backgroundColor: '#fef2f2', color: '#b91c1c', padding: '12px', borderRadius: '8px', fontSize: '14px', marginBottom: '20px', border: '1px solid #fecaca' }
+    error: { backgroundColor: '#fef2f2', color: '#b91c1c', padding: '12px', borderRadius: '8px', fontSize: '14px', marginBottom: '20px', border: '1px solid #fecaca' },
+    radioGroup: { display: 'flex', gap: '20px', marginBottom: '20px' },
+    radioLabel: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }
   };
 
   return (
     <div style={s.body}>
-      {/* NAVBAR CON NUOVO NOME */}
       <nav style={s.nav}>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="#3b82f6" />
+        </svg>
         <h1 style={s.logoText}>Compara<span style={s.logoDot}>Facile</span></h1>
       </nav>
 
@@ -161,29 +150,68 @@ function App() {
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
               </div>
               <h2 style={{...s.title, marginBottom: '12px'}}>Richiesta Ricevuta!</h2>
-              <p style={{ color: theme.textMuted, fontSize: '16px', lineHeight: '1.5', marginBottom: '32px' }}>
-                Grazie <strong>{nome}</strong>, abbiamo registrato la tua preferenza.<br/>
+              <p style={{ color: '#6b7280', fontSize: '16px', lineHeight: '1.5', marginBottom: '32px' }}>
+                Grazie <strong>{tipoCliente === 'azienda' ? ragioneSociale : nome}</strong>, abbiamo registrato la tua richiesta di <strong>{tipoPratica}</strong>.<br/>
                 Un nostro consulente ti contatterà <strong>entro 48 ore</strong> ai recapiti forniti.
               </p>
-              <button onClick={() => window.location.reload()} style={{...s.btnPrimary, backgroundColor: theme.border, color: theme.textMain}}>Torna alla home</button>
+              <button onClick={() => window.location.reload()} style={{...s.btnPrimary, backgroundColor: '#e5e7eb', color: '#111827'}}>Torna alla home</button>
             </div>
           ) : (
             <>
               <h2 style={s.title}>Confronta le offerte</h2>
-              <p style={s.subtitle}>Scopri in 1 minuto come risparmiare sulle tue bollette.</p>
+              <p style={s.subtitle}>Scopri in 1 minuto come risparmiare su luce, gas e fibra.</p>
 
               <form onSubmit={gestisciInvio}>
-                <div style={s.sectionTitle}>1. Dati Personali</div>
-                <div style={s.row}>
-                  <div style={{...s.inputGroup, ...s.col}}>
-                    <label style={s.label}>Nome</label>
-                    <input type="text" style={s.input} value={nome} onChange={(e) => setNome(e.target.value)} required />
-                  </div>
-                  <div style={{...s.inputGroup, ...s.col}}>
-                    <label style={s.label}>Cognome</label>
-                    <input type="text" style={s.input} value={cognome} onChange={(e) => setCognome(e.target.value)} required />
-                  </div>
+                
+                {/* TIPO DI PRATICA */}
+                <div style={s.sectionTitle}>Cosa devi fare?</div>
+                <div style={s.inputGroup}>
+                  <select style={s.input} value={tipoPratica} onChange={(e) => setTipoPratica(e.target.value)}>
+                    <option value="Switch">Switch (Cambio Fornitore)</option>
+                    <option value="Nuova Attivazione">Nuova Attivazione (Allaccio)</option>
+                    <option value="Subentro">Subentro (Casa disabitata)</option>
+                    <option value="Voltura">Voltura (Cambio Intestatario)</option>
+                  </select>
                 </div>
+
+                {/* TIPO CLIENTE */}
+                <div style={s.sectionTitle}>Tipo di Cliente</div>
+                <div style={s.radioGroup}>
+                  <label style={s.radioLabel}>
+                    <input type="radio" value="privato" checked={tipoCliente === 'privato'} onChange={() => setTipoCliente('privato')} />
+                    Privato
+                  </label>
+                  <label style={s.radioLabel}>
+                    <input type="radio" value="azienda" checked={tipoCliente === 'azienda'} onChange={() => setTipoCliente('azienda')} />
+                    Azienda / Partita IVA
+                  </label>
+                </div>
+
+                <div style={s.sectionTitle}>Dati Anagrafici</div>
+                
+                {tipoCliente === 'azienda' ? (
+                  <div style={s.row}>
+                    <div style={{...s.inputGroup, ...s.col}}>
+                      <label style={s.label}>Ragione Sociale</label>
+                      <input type="text" style={s.input} value={ragioneSociale} onChange={(e) => setRagioneSociale(e.target.value)} required />
+                    </div>
+                    <div style={{...s.inputGroup, ...s.col}}>
+                      <label style={s.label}>Partita IVA</label>
+                      <input type="text" style={s.input} value={partitaIva} onChange={(e) => setPartitaIva(e.target.value)} required />
+                    </div>
+                  </div>
+                ) : (
+                  <div style={s.row}>
+                    <div style={{...s.inputGroup, ...s.col}}>
+                      <label style={s.label}>Nome</label>
+                      <input type="text" style={s.input} value={nome} onChange={(e) => setNome(e.target.value)} required />
+                    </div>
+                    <div style={{...s.inputGroup, ...s.col}}>
+                      <label style={s.label}>Cognome</label>
+                      <input type="text" style={s.input} value={cognome} onChange={(e) => setCognome(e.target.value)} required />
+                    </div>
+                  </div>
+                )}
 
                 <div style={s.row}>
                   <div style={{...s.inputGroup, ...s.col}}>
@@ -197,17 +225,19 @@ function App() {
                 </div>
 
                 <div style={s.row}>
+                  {tipoCliente === 'privato' && (
+                    <div style={{...s.inputGroup, ...s.col}}>
+                      <label style={s.label}>Codice Fiscale</label>
+                      <input type="text" style={s.input} value={codiceFiscale} onChange={(e) => setCodiceFiscale(e.target.value)} required />
+                    </div>
+                  )}
                   <div style={{...s.inputGroup, ...s.col}}>
-                    <label style={s.label}>Codice Fiscale</label>
-                    <input type="text" style={s.input} value={codiceFiscale} onChange={(e) => setCodiceFiscale(e.target.value)} required />
-                  </div>
-                  <div style={{...s.inputGroup, ...s.col}}>
-                    <label style={s.label}>Indirizzo di Residenza</label>
+                    <label style={s.label}>Indirizzo Sede/Residenza</label>
                     <input type="text" style={s.input} value={residenza} onChange={(e) => setResidenza(e.target.value)} placeholder="Via, Civico, Città" required />
                   </div>
                 </div>
 
-                <div style={s.sectionTitle}>2. Dettagli Fornitura</div>
+                <div style={s.sectionTitle}>Dettagli Fornitura</div>
                 <div style={s.inputGroup}>
                   <label style={s.label}>Cosa vuoi confrontare?</label>
                   <select style={s.input} value={tipoFornitura} onChange={(e) => setTipoFornitura(e.target.value)}>
@@ -218,12 +248,11 @@ function App() {
                   </select>
                 </div>
 
-                {/* INDIRIZZO DI FORNITURA (Solo se non è fibra) */}
                 {tipoFornitura !== 'fibra' && (
                   <>
                     <div style={s.checkboxGroup} onClick={() => setIsStessaResidenza(!isStessaResidenza)}>
                       <input type="checkbox" checked={isStessaResidenza} onChange={() => {}} style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
-                      <label style={{...s.label, marginBottom: 0, cursor: 'pointer' }}>Il luogo di fornitura è la mia residenza</label>
+                      <label style={{...s.label, marginBottom: 0, cursor: 'pointer' }}>Il luogo di fornitura coincide con la sede/residenza</label>
                     </div>
 
                     {!isStessaResidenza && (
@@ -232,25 +261,22 @@ function App() {
                         <input type="text" style={s.input} value={luogoFornitura} onChange={(e) => setLuogoFornitura(e.target.value)} placeholder="Via, Civico, Città" required />
                       </div>
                     )}
-                  </>
-                )}
 
-                {/* POD E PDR (Facoltativi) */}
-                {tipoFornitura !== 'fibra' && (
-                  <div style={s.row}>
-                    {(tipoFornitura === 'luce' || tipoFornitura === 'duale') && (
-                      <div style={{...s.inputGroup, ...s.col}}>
-                        <label style={s.label}>Codice POD (opzionale)</label>
-                        <input type="text" style={s.input} value={pod} onChange={(e) => setPod(e.target.value)} placeholder="IT001E..." />
-                      </div>
-                    )}
-                    {(tipoFornitura === 'gas' || tipoFornitura === 'duale') && (
-                      <div style={{...s.inputGroup, ...s.col}}>
-                        <label style={s.label}>Codice PDR (opzionale)</label>
-                        <input type="text" style={s.input} value={pdr} onChange={(e) => setPdr(e.target.value)} placeholder="01234567890..." />
-                      </div>
-                    )}
-                  </div>
+                    <div style={s.row}>
+                      {(tipoFornitura === 'luce' || tipoFornitura === 'duale') && (
+                        <div style={{...s.inputGroup, ...s.col}}>
+                          <label style={s.label}>Codice POD (opzionale)</label>
+                          <input type="text" style={s.input} value={pod} onChange={(e) => setPod(e.target.value)} placeholder="IT001E..." />
+                        </div>
+                      )}
+                      {(tipoFornitura === 'gas' || tipoFornitura === 'duale') && (
+                        <div style={{...s.inputGroup, ...s.col}}>
+                          <label style={s.label}>Codice PDR (opzionale)</label>
+                          <input type="text" style={s.input} value={pdr} onChange={(e) => setPdr(e.target.value)} placeholder="01234567890..." />
+                        </div>
+                      )}
+                    </div>
+                  </>
                 )}
 
                 <button type="submit" disabled={loading} style={s.btnPrimary}>
@@ -258,10 +284,9 @@ function App() {
                 </button>
               </form>
 
-              {/* RISULTATI */}
               {risultati && (
                 <div style={{ marginTop: '40px' }}>
-                  <h3 style={{ fontSize: '18px', color: theme.textMain, marginBottom: '8px' }}>Offerte disponibili</h3>
+                  <h3 style={{ fontSize: '18px', color: '#111827', marginBottom: '8px' }}>Offerte disponibili</h3>
                   <table style={s.table}>
                     <thead>
                       <tr>
