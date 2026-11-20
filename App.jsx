@@ -10,7 +10,7 @@ function App() {
   const [tipoCliente, setTipoCliente] = useState('privato');
   const [tipoPratica, setTipoPratica] = useState('Switch');
   const [privacyAccettata, setPrivacyAccettata] = useState(false);
-  const [consensoMarketing, setConsensoMarketing] = useState(false);
+const [consensoMarketing, setConsensoMarketing] = useState(false);
   
   const [nome, setNome] = useState('');
   const [cognome, setCognome] = useState('');
