@@ -124,7 +124,7 @@ try {
       pod,
       pdr,
       nome_file_bolletta: fileUrl,
-      offerta_scelta: `${offerta.fornitore} - ${offerta.offerta} (${offerta.prezzo})`
+      offerta_scelta: `${offerta.fornitore} - ${offerta.offerta} (${offerta.prezzo})`,
       privacy_accettata: privacyAccettata,
       consenso_marketing: consensoMarketing
     };
