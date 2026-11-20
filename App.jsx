@@ -1,11 +1,12 @@
 import { useState } from 'react';
 
-// USA SOLO LA CHIAVE "anon public" DI SUPABASE, MAI LA "service_role"!
+const BACKEND_URL = 'https://comparafacile-backend.onrender.com';
 const SUPABASE_URL = 'https://bqyyhpmxatvuxvlnwdwp.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxeXlocG14YXZ0dXZ4bG5vd2RwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUwOTU3NTgsImV4cCI6MjExMDY3MTc1OH0.pkBektrwI8yZE0f1SvW6RHMePqNGYLqkq5XAj_h1Qps';
 
 function App() {
   const [tipoServizio, setTipoServizio] = useState('energia');
+  const [tipoFornitura, setTipoFornitura] = useState('luce'); // 'luce', 'gas', 'dual'
   const [tipoCliente, setTipoCliente] = useState('privato');
   const [tipoPratica, setTipoPratica] = useState('Switch');
   
@@ -34,6 +35,7 @@ function App() {
 
     const datiUtente = {
       tipo_servizio: tipoServizio,
+      tipo_fornitura: tipoServizio === 'energia' ? tipoFornitura : 'fibra',
       tipo_cliente: tipoCliente,
       tipo_pratica: tipoPratica,
       nome,
@@ -49,7 +51,7 @@ function App() {
     };
 
     try {
-      const risposta = await fetch('https://comparafacile-backend.onrender.com/confronta', {
+      const risposta = await fetch(`${BACKEND_URL}/confronta`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(datiUtente),
@@ -70,10 +72,9 @@ function App() {
     
     let fileUrl = "Nessun file caricato";
 
-    // 1. CARICAMENTO FILE SU SUPABASE STORAGE
-    if (fileBolletta) {
+    // 1. CARICAMENTO FILE SU SUPABASE STORAGE (se presente)
+    if (fileBolletta && SUPABASE_ANON_KEY.startsWith('eyJ')) {
       try {
-        // Pulisce il nome del file da spazi o caratteri strani che causano errori di rete
         const cleanName = fileBolletta.name.replace(/[^a-zA-Z0-9.-]/g, '_');
         const fileName = `${Date.now()}_${cleanName}`;
         
@@ -90,19 +91,17 @@ function App() {
         if (uploadRes.ok) {
           fileUrl = `${SUPABASE_URL}/storage/v1/object/public/bollette/${fileName}`;
         } else {
-          const errText = await uploadRes.text();
-          console.error("Dettaglio upload:", errText);
-          fileUrl = `Errore upload: ${fileBolletta.name}`;
+          fileUrl = `File locale: ${fileBolletta.name}`;
         }
       } catch (err) {
-        console.error("Errore rete upload:", err);
-        fileUrl = `Errore rete: ${fileBolletta.name}`;
+        fileUrl = `File locale: ${fileBolletta.name}`;
       }
     }
 
-    // 2. SALVATAGGIO DATI NEL DATABASE
+    // 2. SALVATAGGIO TRAMITE IL TUO BACKEND SU RENDER (zero errori CORS!)
     const payload = {
       tipo_servizio: tipoServizio,
+      tipo_fornitura: tipoServizio === 'energia' ? tipoFornitura : 'fibra',
       tipo_cliente: tipoCliente,
       tipo_pratica: tipoPratica,
       nome,
@@ -120,14 +119,9 @@ function App() {
     };
 
     try {
-      const response = await fetch(`${SUPABASE_URL}/rest/v1/lead_ai_energia`, {
+      const response = await fetch(`${BACKEND_URL}/salva`, {
         method: 'POST',
-        headers: {
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=minimal'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
@@ -135,11 +129,11 @@ function App() {
         setSuccesso(true);
         setRisultati(null);
       } else {
-        const erroreDettaglio = await response.text();
-        setErrore("Errore salvataggio database: " + erroreDettaglio);
+        const errData = await response.json();
+        setErrore("Errore salvataggio: " + (errData.detail || "Controlla le colonne della tabella Supabase"));
       }
     } catch (error) {
-      setErrore("Errore di connessione al database. Controlla la connessione o le policy RLS di Supabase.");
+      setErrore("Impossibile contattare il server di salvataggio. Riprova tra qualche secondo.");
     } finally {
       setLoading(false);
     }
@@ -160,8 +154,21 @@ function App() {
     input: { width: '100%', padding: '12px 14px', borderRadius: '10px', border: `1px solid ${theme.border}`, backgroundColor: '#09090b', color: theme.textMain, fontSize: '15px', outline: 'none', boxSizing: 'border-box' },
     row: { display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '16px' },
     col: { flex: '1 1 240px' },
-    radioGroup: { display: 'flex', gap: '20px', marginBottom: '20px', backgroundColor: '#09090b', padding: '14px', borderRadius: '12px', border: `1px solid ${theme.border}` },
+    radioGroup: { display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '16px', backgroundColor: '#09090b', padding: '14px', borderRadius: '12px', border: `1px solid ${theme.border}` },
     radioLabel: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', cursor: 'pointer' },
+    pillBtn: (active) => ({
+      flex: 1,
+      padding: '12px',
+      borderRadius: '10px',
+      border: active ? `1px solid ${theme.primary}` : `1px solid ${theme.border}`,
+      backgroundColor: active ? 'rgba(245, 158, 11, 0.15)' : '#09090b',
+      color: active ? theme.primary : theme.textMuted,
+      fontWeight: active ? '700' : '500',
+      cursor: 'pointer',
+      textAlign: 'center',
+      fontSize: '14px',
+      transition: 'all 0.2s'
+    }),
     btnPrimary: { width: '100%', padding: '16px', background: `linear-gradient(to right, ${theme.primary}, #d97706)`, color: 'white', border: 'none', borderRadius: '12px', fontSize: '16px', fontWeight: '700', cursor: 'pointer', marginTop: '24px', boxShadow: `0 0 20px rgba(245, 158, 11, 0.25)` },
     offerCard: { border: `1px solid ${theme.border}`, borderRadius: '16px', padding: '18px', marginBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#09090b', gap: '12px', flexWrap: 'wrap' },
     offerBest: { border: `1px solid ${theme.primary}`, boxShadow: `0 0 15px rgba(245, 158, 11, 0.15)` },
@@ -212,6 +219,21 @@ function App() {
                   </label>
                 </div>
 
+                {/* SELETTORE SOLO LUCE / SOLO GAS / DUAL */}
+                {tipoServizio === 'energia' && (
+                  <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                    <div onClick={() => setTipoFornitura('luce')} style={s.pillBtn(tipoFornitura === 'luce')}>
+                      💡 Solo Luce
+                    </div>
+                    <div onClick={() => setTipoFornitura('gas')} style={s.pillBtn(tipoFornitura === 'gas')}>
+                      🔥 Solo Gas
+                    </div>
+                    <div onClick={() => setTipoFornitura('dual')} style={s.pillBtn(tipoFornitura === 'dual')}>
+                      ⚡🔥 Dual (Luce + Gas)
+                    </div>
+                  </div>
+                )}
+
                 <div style={s.sectionTitle}>2. La tua richiesta</div>
                 <div style={s.row}>
                   <div style={s.col}>
@@ -259,10 +281,17 @@ function App() {
                   <div style={s.col}><label style={s.label}>Indirizzo</label><input type="text" style={s.input} value={residenza} onChange={(e) => setResidenza(e.target.value)} required /></div>
                 </div>
 
-                <div style={s.row}>
-                  <div style={s.col}><label style={s.label}>Codice POD (Opzionale)</label><input type="text" style={s.input} value={pod} onChange={(e) => setPod(e.target.value)} /></div>
-                  <div style={s.col}><label style={s.label}>Codice PDR (Opzionale)</label><input type="text" style={s.input} value={pdr} onChange={(e) => setPdr(e.target.value)} /></div>
-                </div>
+                {/* MOSTRA POD SOLO SE LUCE O DUAL, PDR SOLO SE GAS O DUAL */}
+                {tipoServizio === 'energia' && (
+                  <div style={s.row}>
+                    {(tipoFornitura === 'luce' || tipoFornitura === 'dual') && (
+                      <div style={s.col}><label style={s.label}>Codice POD Luce (Opzionale)</label><input type="text" style={s.input} value={pod} onChange={(e) => setPod(e.target.value)} /></div>
+                    )}
+                    {(tipoFornitura === 'gas' || tipoFornitura === 'dual') && (
+                      <div style={s.col}><label style={s.label}>Codice PDR Gas (Opzionale)</label><input type="text" style={s.input} value={pdr} onChange={(e) => setPdr(e.target.value)} /></div>
+                    )}
+                  </div>
+                )}
 
                 {tipoServizio === 'energia' && (
                   <div style={{marginTop: '10px'}}>
@@ -283,7 +312,9 @@ function App() {
 
               {risultati && (
                 <div style={{ marginTop: '36px' }}>
-                  <h3 style={{ fontSize: '18px', color: theme.textMain, marginBottom: '16px' }}>Le migliori offerte trovate</h3>
+                  <h3 style={{ fontSize: '18px', color: theme.textMain, marginBottom: '16px' }}>
+                    Le migliori offerte {tipoServizio === 'energia' ? `(${tipoFornitura.toUpperCase()})` : 'Telefonia'}
+                  </h3>
                   {risultati.map((offerta, indice) => (
                     <div key={indice} style={indice === 0 ? {...s.offerCard, ...s.offerBest} : s.offerCard}>
                       <div>
@@ -291,7 +322,7 @@ function App() {
                         <p style={{ margin: 0, fontSize: '13px', color: theme.textMuted }}>{offerta.offerta}</p>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        <div style={{ fontSize: '17px', fontWeight: '800', color: theme.primary }}>{offerta.prezzo}</div>
+                        <div style={{ fontSize: '16px', fontWeight: '800', color: theme.primary }}>{offerta.prezzo}</div>
                         <button onClick={() => inviaScelta(offerta)} disabled={loading} style={s.btnScegli}>
                           {loading ? '...' : 'Scegli'}
                         </button>
