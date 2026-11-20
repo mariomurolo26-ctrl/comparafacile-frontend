@@ -13,6 +13,8 @@ function App() {
   const [telefono, setTelefono] = useState('');
   const [codiceFiscale, setCodiceFiscale] = useState('');
   const [residenza, setResidenza] = useState('');
+  const [pod, setPod] = useState('');
+  const [pdr, setPdr] = useState('');
   const [fileBolletta, setFileBolletta] = useState(null);
 
   const [risultati, setRisultati] = useState(null);
@@ -27,11 +29,9 @@ function App() {
     setRisultati(null);
 
     const datiUtente = {
-      tipo_servizio: tipoServizio,
-      tipo_cliente: tipoCliente,
-      tipo_pratica: tipoPratica,
+      tipo_servizio: tipoServizio, tipo_cliente: tipoCliente, tipo_pratica: tipoPratica,
       nome, cognome, ragione_sociale: ragioneSociale, partita_iva: partitaIva,
-      email, telefono, codice_fiscale: codiceFiscale, residenza
+      email, telefono, codice_fiscale: codiceFiscale, residenza, pod, pdr
     };
 
     try {
@@ -50,14 +50,43 @@ function App() {
   };
 
   const inviaScelta = async (offerta) => {
+    alert("Hai cliccato Scegli! Inizio a salvare...");
     setLoading(true);
     setErrore(null);
     
+    let fileUrl = "Nessun file caricato";
+
+    // 1. CARICAMENTO FILE SU SUPABASE STORAGE
+    if (fileBolletta) {
+      try {
+        const fileName = `${Date.now()}_${fileBolletta.name}`;
+        const uploadRes = await fetch(`https://bqyyhpmxatvuxvlnwdwp.supabase.co/storage/v1/object/bollette/${fileName}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxeXlocG14YXZ0dXZ4bG5vd2RwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5NTA5NTc1OCwiZXhwIjoyMTEwNjcxNzU4fQ.Jgdn4QNHBJEwCD-A1jInJtOG5D-8OxRJRzbjKPI7o6E',
+            'Content-Type': fileBolletta.type
+          },
+          body: fileBolletta
+        });
+        
+        if (uploadRes.ok) {
+          fileUrl = `https://bqyyhpmxatvuxvlnwdwp.supabase.co/storage/v1/object/public/bollette/${fileName}`;
+        } else {
+          alert("Errore upload file: controlla di aver creato il bucket 'bollette' su Supabase!");
+          fileUrl = fileBolletta.name; 
+        }
+      } catch (err) {
+        alert("Errore di rete nell'upload del file.");
+        fileUrl = fileBolletta.name;
+      }
+    }
+
+    // 2. SALVATAGGIO DATI NEL DATABASE
     const payload = {
       tipo_servizio: tipoServizio, tipo_cliente: tipoCliente, tipo_pratica: tipoPratica,
       nome, cognome, ragione_sociale: ragioneSociale, partita_iva: partitaIva,
-      email, telefono, codice_fiscale: codiceFiscale, residenza,
-      nome_file_bolletta: fileBolletta ? fileBolletta.name : "Nessun file caricato",
+      email, telefono, codice_fiscale: codiceFiscale, residenza, pod, pdr,
+      nome_file_bolletta: fileUrl,
       offerta_scelta: `${offerta.fornitore} - ${offerta.offerta}`
     };
 
@@ -78,28 +107,20 @@ function App() {
         setRisultati(null);
       } else {
         const erroreDettaglio = await response.text();
-        alert("ERRORE SUPABASE: " + erroreDettaglio); // Questo ti dirà esattamente cosa non va
+        alert("ERRORE DATABASE: " + erroreDettaglio); // <--- QUESTO TI DIRÀ IL PROBLEMA
         setErrore("Errore salvataggio: " + erroreDettaglio);
       }
     } catch (error) {
+      alert("ERRORE DI RETE: " + error.message);
       setErrore("Errore di connessione al database.");
     } finally {
       setLoading(false);
     }
   };
 
-  const theme = {
-    bg: '#09090b',
-    cardBg: '#18181b',
-    primary: '#f59e0b',
-    secondary: '#3b82f6',
-    textMain: '#fafafa',
-    textMuted: '#a1a1aa',
-    border: '#27272a'
-  };
+  const theme = { bg: '#09090b', cardBg: '#18181b', primary: '#f59e0b', secondary: '#3b82f6', textMain: '#fafafa', textMuted: '#a1a1aa', border: '#27272a' };
 
   const s = {
-    // Aggiunto margin: 0 e padding: 0 per togliere i bordi bianchi
     body: { margin: 0, padding: 0, backgroundColor: theme.bg, minHeight: '100vh', width: '100vw', fontFamily: 'Inter, system-ui, sans-serif', color: theme.textMain, display: 'flex', flexDirection: 'column', overflowX: 'hidden' },
     nav: { padding: '20px 40px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: `1px solid ${theme.border}`, backgroundColor: theme.bg },
     logoText: { fontSize: '22px', fontWeight: '800', letterSpacing: '-0.5px', color: theme.textMain, margin: 0 },
@@ -211,7 +232,11 @@ function App() {
                   <div style={s.col}><label style={s.label}>Indirizzo</label><input type="text" style={s.input} value={residenza} onChange={(e) => setResidenza(e.target.value)} required /></div>
                 </div>
 
-                {/* CARICAMENTO FATTURA OPZIONALE */}
+                <div style={s.row}>
+                  <div style={s.col}><label style={s.label}>Codice POD (Opzionale)</label><input type="text" style={s.input} value={pod} onChange={(e) => setPod(e.target.value)} /></div>
+                  <div style={s.col}><label style={s.label}>Codice PDR (Opzionale)</label><input type="text" style={s.input} value={pdr} onChange={(e) => setPdr(e.target.value)} /></div>
+                </div>
+
                 {tipoServizio === 'energia' && (
                   <div style={{...s.col, marginTop: '10px'}}>
                     <label style={s.label}>Carica una bolletta (Opzionale)</label>
