@@ -1,5 +1,9 @@
 import { useState } from 'react';
 
+// USA SOLO LA CHIAVE "anon public" DI SUPABASE, MAI LA "service_role"!
+const SUPABASE_URL = 'https://bqyyhpmxatvuxvlnwdwp.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxeXlocG14YXZ0dXZ4bG5vd2RwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUwOTU3NTgsImV4cCI6MjExMDY3MTc1OH0.pkBektrwI8yZE0f1SvW6RHMePqNGYLqkq5XAj_h1Qps';
+
 function App() {
   const [tipoServizio, setTipoServizio] = useState('energia');
   const [tipoCliente, setTipoCliente] = useState('privato');
@@ -29,9 +33,19 @@ function App() {
     setRisultati(null);
 
     const datiUtente = {
-      tipo_servizio: tipoServizio, tipo_cliente: tipoCliente, tipo_pratica: tipoPratica,
-      nome, cognome, ragione_sociale: ragioneSociale, partita_iva: partitaIva,
-      email, telefono, codice_fiscale: codiceFiscale, residenza, pod, pdr
+      tipo_servizio: tipoServizio,
+      tipo_cliente: tipoCliente,
+      tipo_pratica: tipoPratica,
+      nome,
+      cognome,
+      ragione_sociale: ragioneSociale,
+      partita_iva: partitaIva,
+      email,
+      telefono,
+      codice_fiscale: codiceFiscale,
+      residenza,
+      pod,
+      pdr
     };
 
     try {
@@ -40,17 +54,17 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(datiUtente),
       });
+      if (!risposta.ok) throw new Error("Errore dal server");
       const dati = await risposta.json();
       setRisultati(dati.risultati);
     } catch (error) {
-      setErrore("Il server ci sta mettendo troppo tempo a svegliarsi. Riprova tra 30 secondi.");
+      setErrore("Il server su Render si sta avviando (ci mette circa 30 secondi al primo avvio). Riprova tra poco.");
     } finally {
       setLoading(false);
     }
   };
 
   const inviaScelta = async (offerta) => {
-    alert("Hai cliccato Scegli! Inizio a salvare...");
     setLoading(true);
     setErrore(null);
     
@@ -59,43 +73,58 @@ function App() {
     // 1. CARICAMENTO FILE SU SUPABASE STORAGE
     if (fileBolletta) {
       try {
-        const fileName = `${Date.now()}_${fileBolletta.name}`;
-        const uploadRes = await fetch(`https://bqyyhpmxatvuxvlnwdwp.supabase.co/storage/v1/object/bollette/${fileName}`, {
+        // Pulisce il nome del file da spazi o caratteri strani che causano errori di rete
+        const cleanName = fileBolletta.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const fileName = `${Date.now()}_${cleanName}`;
+        
+        const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/bollette/${fileName}`, {
           method: 'POST',
           headers: {
-            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxeXlocG14YXZ0dXZ4bG5vd2RwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5NTA5NTc1OCwiZXhwIjoyMTEwNjcxNzU4fQ.Jgdn4QNHBJEwCD-A1jInJtOG5D-8OxRJRzbjKPI7o6E',
-            'Content-Type': fileBolletta.type
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': fileBolletta.type || 'application/octet-stream'
           },
           body: fileBolletta
         });
         
         if (uploadRes.ok) {
-          fileUrl = `https://bqyyhpmxatvuxvlnwdwp.supabase.co/storage/v1/object/public/bollette/${fileName}`;
+          fileUrl = `${SUPABASE_URL}/storage/v1/object/public/bollette/${fileName}`;
         } else {
-          alert("Errore upload file: controlla di aver creato il bucket 'bollette' su Supabase!");
-          fileUrl = fileBolletta.name; 
+          const errText = await uploadRes.text();
+          console.error("Dettaglio upload:", errText);
+          fileUrl = `Errore upload: ${fileBolletta.name}`;
         }
       } catch (err) {
-        alert("Errore di rete nell'upload del file.");
-        fileUrl = fileBolletta.name;
+        console.error("Errore rete upload:", err);
+        fileUrl = `Errore rete: ${fileBolletta.name}`;
       }
     }
 
     // 2. SALVATAGGIO DATI NEL DATABASE
     const payload = {
-      tipo_servizio: tipoServizio, tipo_cliente: tipoCliente, tipo_pratica: tipoPratica,
-      nome, cognome, ragione_sociale: ragioneSociale, partita_iva: partitaIva,
-      email, telefono, codice_fiscale: codiceFiscale, residenza, pod, pdr,
+      tipo_servizio: tipoServizio,
+      tipo_cliente: tipoCliente,
+      tipo_pratica: tipoPratica,
+      nome,
+      cognome,
+      ragione_sociale: ragioneSociale,
+      partita_iva: partitaIva,
+      email,
+      telefono,
+      codice_fiscale: codiceFiscale,
+      residenza,
+      pod,
+      pdr,
       nome_file_bolletta: fileUrl,
-      offerta_scelta: `${offerta.fornitore} - ${offerta.offerta}`
+      offerta_scelta: `${offerta.fornitore} - ${offerta.offerta} (${offerta.prezzo})`
     };
 
     try {
-      const response = await fetch('https://bqyyhpmxatvuxvlnwdwp.supabase.co/rest/v1/lead_ai_energia', {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/lead_ai_energia`, {
         method: 'POST',
         headers: {
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxeXlocG14YXZ0dXZ4bG5vd2RwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5NTA5NTc1OCwiZXhwIjoyMTEwNjcxNzU4fQ.Jgdn4QNHBJEwCD-A1jInJtOG5D-8OxRJRzbjKPI7o6E',
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxeXlocG14YXZ0dXZ4bG5vd2RwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5NTA5NTc1OCwiZXhwIjoyMTEwNjcxNzU4fQ.Jgdn4QNHBJEwCD-A1jInJtOG5D-8OxRJRzbjKPI7o6E',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
           'Content-Type': 'application/json',
           'Prefer': 'return=minimal'
         },
@@ -107,12 +136,10 @@ function App() {
         setRisultati(null);
       } else {
         const erroreDettaglio = await response.text();
-        alert("ERRORE DATABASE: " + erroreDettaglio); // <--- QUESTO TI DIRÀ IL PROBLEMA
-        setErrore("Errore salvataggio: " + erroreDettaglio);
+        setErrore("Errore salvataggio database: " + erroreDettaglio);
       }
     } catch (error) {
-      alert("ERRORE DI RETE: " + error.message);
-      setErrore("Errore di connessione al database.");
+      setErrore("Errore di connessione al database. Controlla la connessione o le policy RLS di Supabase.");
     } finally {
       setLoading(false);
     }
@@ -121,32 +148,32 @@ function App() {
   const theme = { bg: '#09090b', cardBg: '#18181b', primary: '#f59e0b', secondary: '#3b82f6', textMain: '#fafafa', textMuted: '#a1a1aa', border: '#27272a' };
 
   const s = {
-    body: { margin: 0, padding: 0, backgroundColor: theme.bg, minHeight: '100vh', width: '100vw', fontFamily: 'Inter, system-ui, sans-serif', color: theme.textMain, display: 'flex', flexDirection: 'column', overflowX: 'hidden' },
-    nav: { padding: '20px 40px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: `1px solid ${theme.border}`, backgroundColor: theme.bg },
+    body: { margin: 0, padding: 0, backgroundColor: theme.bg, minHeight: '100vh', width: '100%', fontFamily: 'Inter, system-ui, sans-serif', color: theme.textMain, display: 'flex', flexDirection: 'column', boxSizing: 'border-box' },
+    nav: { padding: '20px 32px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: `1px solid ${theme.border}`, backgroundColor: theme.bg, width: '100%', boxSizing: 'border-box' },
     logoText: { fontSize: '22px', fontWeight: '800', letterSpacing: '-0.5px', color: theme.textMain, margin: 0 },
-    mainContainer: { flex: 1, display: 'flex', justifyContent: 'center', padding: '40px 20px' },
-    card: { width: '100%', maxWidth: '700px', backgroundColor: theme.cardBg, borderRadius: '24px', border: `1px solid ${theme.border}`, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', padding: '40px' },
-    heroTitle: { fontSize: '32px', fontWeight: '800', textAlign: 'center', marginBottom: '10px', background: `linear-gradient(to right, ${theme.primary}, ${theme.secondary})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' },
-    heroSub: { fontSize: '16px', color: theme.textMuted, textAlign: 'center', marginBottom: '40px' },
-    sectionTitle: { fontSize: '13px', fontWeight: '700', color: theme.primary, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px', marginTop: '30px' },
-    label: { display: 'block', fontSize: '14px', fontWeight: '500', color: theme.textMuted, marginBottom: '8px' },
-    input: { width: '100%', padding: '14px 16px', borderRadius: '12px', border: `1px solid ${theme.border}`, backgroundColor: '#09090b', color: theme.textMain, fontSize: '15px', outline: 'none' },
-    row: { display: 'flex', gap: '16px' },
-    col: { flex: 1, marginBottom: '16px' },
-    radioGroup: { display: 'flex', gap: '20px', marginBottom: '20px', backgroundColor: '#09090b', padding: '15px', borderRadius: '12px', border: `1px solid ${theme.border}` },
+    mainContainer: { flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'flex-start', padding: '40px 16px', width: '100%', boxSizing: 'border-box' },
+    card: { width: '100%', maxWidth: '680px', backgroundColor: theme.cardBg, borderRadius: '24px', border: `1px solid ${theme.border}`, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', padding: '32px', boxSizing: 'border-box' },
+    heroTitle: { fontSize: '30px', fontWeight: '800', textAlign: 'center', marginBottom: '10px', background: `linear-gradient(to right, ${theme.primary}, ${theme.secondary})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' },
+    heroSub: { fontSize: '15px', color: theme.textMuted, textAlign: 'center', marginBottom: '32px' },
+    sectionTitle: { fontSize: '12px', fontWeight: '700', color: theme.primary, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '14px', marginTop: '28px' },
+    label: { display: 'block', fontSize: '13px', fontWeight: '500', color: theme.textMuted, marginBottom: '6px' },
+    input: { width: '100%', padding: '12px 14px', borderRadius: '10px', border: `1px solid ${theme.border}`, backgroundColor: '#09090b', color: theme.textMain, fontSize: '15px', outline: 'none', boxSizing: 'border-box' },
+    row: { display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '16px' },
+    col: { flex: '1 1 240px' },
+    radioGroup: { display: 'flex', gap: '20px', marginBottom: '20px', backgroundColor: '#09090b', padding: '14px', borderRadius: '12px', border: `1px solid ${theme.border}` },
     radioLabel: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', cursor: 'pointer' },
-    btnPrimary: { width: '100%', padding: '18px', background: `linear-gradient(to right, ${theme.primary}, #d97706)`, color: 'white', border: 'none', borderRadius: '12px', fontSize: '16px', fontWeight: '700', cursor: 'pointer', marginTop: '20px', boxShadow: `0 0 20px rgba(245, 158, 11, 0.3)` },
-    offerCard: { border: `1px solid ${theme.border}`, borderRadius: '16px', padding: '20px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#09090b' },
-    offerBest: { border: `1px solid ${theme.primary}`, boxShadow: `0 0 15px rgba(245, 158, 11, 0.2)` },
-    btnScegli: { backgroundColor: theme.secondary, color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' },
+    btnPrimary: { width: '100%', padding: '16px', background: `linear-gradient(to right, ${theme.primary}, #d97706)`, color: 'white', border: 'none', borderRadius: '12px', fontSize: '16px', fontWeight: '700', cursor: 'pointer', marginTop: '24px', boxShadow: `0 0 20px rgba(245, 158, 11, 0.25)` },
+    offerCard: { border: `1px solid ${theme.border}`, borderRadius: '16px', padding: '18px', marginBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#09090b', gap: '12px', flexWrap: 'wrap' },
+    offerBest: { border: `1px solid ${theme.primary}`, boxShadow: `0 0 15px rgba(245, 158, 11, 0.15)` },
+    btnScegli: { backgroundColor: theme.secondary, color: 'white', border: 'none', padding: '10px 18px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' },
     successIcon: { width: '80px', height: '80px', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px auto', fontSize: '40px' },
-    error: { backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '16px', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.2)', marginBottom: '20px' }
+    error: { backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '14px', borderRadius: '10px', border: '1px solid rgba(239, 68, 68, 0.3)', marginBottom: '20px', fontSize: '14px' }
   };
 
   return (
     <div style={s.body}>
       <nav style={s.nav}>
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={theme.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={theme.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill={theme.primary} />
         </svg>
         <h1 style={s.logoText}>AI <span style={{color: theme.primary}}>Energia</span></h1>
@@ -157,10 +184,10 @@ function App() {
           {errore && <div style={s.error}>{errore}</div>}
 
           {successo ? (
-            <div style={{ textAlign: 'center', padding: '40px 0' }}>
+            <div style={{ textAlign: 'center', padding: '30px 0' }}>
               <div style={s.successIcon}>🤖</div>
-              <h2 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '16px' }}>Elaborazione Completata!</h2>
-              <p style={{ color: theme.textMuted, fontSize: '16px', lineHeight: '1.6', marginBottom: '32px' }}>
+              <h2 style={{ fontSize: '26px', fontWeight: '800', marginBottom: '16px' }}>Elaborazione Completata!</h2>
+              <p style={{ color: theme.textMuted, fontSize: '15px', lineHeight: '1.6', marginBottom: '32px' }}>
                 Grazie <strong style={{color: theme.textMain}}>{tipoCliente === 'azienda' ? ragioneSociale : nome}</strong>.<br/><br/>
                 La nostra AI sta già svolgendo il suo lavoro. Invierà lei direttamente la richiesta alla fornitura scelta. 
                 <strong style={{color: theme.primary}}> Verrai contattato entro 48 ore</strong> per finalizzare l'attivazione.
@@ -238,13 +265,13 @@ function App() {
                 </div>
 
                 {tipoServizio === 'energia' && (
-                  <div style={{...s.col, marginTop: '10px'}}>
+                  <div style={{marginTop: '10px'}}>
                     <label style={s.label}>Carica una bolletta (Opzionale)</label>
                     <input 
                       type="file" 
                       onChange={(e) => setFileBolletta(e.target.files[0])} 
                       style={{...s.input, padding: '10px'}} 
-                      accept=".pdf,.jpg,.png"
+                      accept=".pdf,.jpg,.jpeg,.png"
                     />
                   </div>
                 )}
@@ -255,17 +282,19 @@ function App() {
               </form>
 
               {risultati && (
-                <div style={{ marginTop: '40px' }}>
-                  <h3 style={{ fontSize: '18px', color: theme.textMain, marginBottom: '20px' }}>Le migliori offerte trovate</h3>
+                <div style={{ marginTop: '36px' }}>
+                  <h3 style={{ fontSize: '18px', color: theme.textMain, marginBottom: '16px' }}>Le migliori offerte trovate</h3>
                   {risultati.map((offerta, indice) => (
                     <div key={indice} style={indice === 0 ? {...s.offerCard, ...s.offerBest} : s.offerCard}>
                       <div>
-                        <h4 style={{ margin: '0 0 5px 0', fontSize: '18px', color: theme.textMain }}>{offerta.fornitore}</h4>
-                        <p style={{ margin: 0, fontSize: '14px', color: theme.textMuted }}>{offerta.offerta}</p>
+                        <h4 style={{ margin: '0 0 4px 0', fontSize: '17px', color: theme.textMain }}>{offerta.fornitore}</h4>
+                        <p style={{ margin: 0, fontSize: '13px', color: theme.textMuted }}>{offerta.offerta}</p>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                        <div style={{ fontSize: '18px', fontWeight: '800', color: theme.primary }}>{offerta.prezzo}</div>
-                        <button onClick={() => inviaScelta(offerta)} style={s.btnScegli}>Scegli</button>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ fontSize: '17px', fontWeight: '800', color: theme.primary }}>{offerta.prezzo}</div>
+                        <button onClick={() => inviaScelta(offerta)} disabled={loading} style={s.btnScegli}>
+                          {loading ? '...' : 'Scegli'}
+                        </button>
                       </div>
                     </div>
                   ))}
