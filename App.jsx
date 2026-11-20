@@ -1,3 +1,5 @@
+const [privacyAccettata, setPrivacyAccettata] = useState(false);
+const [consensoMarketing, setConsensoMarketing] = useState(false);
 import { useState } from 'react';
 
 const BACKEND_URL = 'https://comparafacile-backend.onrender.com';
