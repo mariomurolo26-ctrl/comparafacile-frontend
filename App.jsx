@@ -13,6 +13,7 @@ function App() {
   const [telefono, setTelefono] = useState('');
   const [codiceFiscale, setCodiceFiscale] = useState('');
   const [residenza, setResidenza] = useState('');
+  const [fileBolletta, setFileBolletta] = useState(null);
 
   const [risultati, setRisultati] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -42,7 +43,7 @@ function App() {
       const dati = await risposta.json();
       setRisultati(dati.risultati);
     } catch (error) {
-      setErrore("Connessione in corso... il server si sta svegliando, riprova tra 30 secondi.");
+      setErrore("Il server ci sta mettendo troppo tempo a svegliarsi. Riprova tra 30 secondi.");
     } finally {
       setLoading(false);
     }
@@ -56,6 +57,7 @@ function App() {
       tipo_servizio: tipoServizio, tipo_cliente: tipoCliente, tipo_pratica: tipoPratica,
       nome, cognome, ragione_sociale: ragioneSociale, partita_iva: partitaIva,
       email, telefono, codice_fiscale: codiceFiscale, residenza,
+      nome_file_bolletta: fileBolletta ? fileBolletta.name : "Nessun file caricato",
       offerta_scelta: `${offerta.fornitore} - ${offerta.offerta}`
     };
 
@@ -76,6 +78,7 @@ function App() {
         setRisultati(null);
       } else {
         const erroreDettaglio = await response.text();
+        alert("ERRORE SUPABASE: " + erroreDettaglio); // Questo ti dirà esattamente cosa non va
         setErrore("Errore salvataggio: " + erroreDettaglio);
       }
     } catch (error) {
@@ -85,20 +88,20 @@ function App() {
     }
   };
 
-  // --- STILI ISIPIRATI A SWITCHAI (Dark Mode) ---
   const theme = {
     bg: '#09090b',
     cardBg: '#18181b',
-    primary: '#f59e0b', // Arancione SwitchAI
-    secondary: '#3b82f6', // Blu SwitchAI
+    primary: '#f59e0b',
+    secondary: '#3b82f6',
     textMain: '#fafafa',
     textMuted: '#a1a1aa',
     border: '#27272a'
   };
 
   const s = {
-    body: { backgroundColor: theme.bg, minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif', color: theme.textMain, display: 'flex', flexDirection: 'column' },
-    nav: { padding: '20px 40px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: `1px solid ${theme.border}` },
+    // Aggiunto margin: 0 e padding: 0 per togliere i bordi bianchi
+    body: { margin: 0, padding: 0, backgroundColor: theme.bg, minHeight: '100vh', width: '100vw', fontFamily: 'Inter, system-ui, sans-serif', color: theme.textMain, display: 'flex', flexDirection: 'column', overflowX: 'hidden' },
+    nav: { padding: '20px 40px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: `1px solid ${theme.border}`, backgroundColor: theme.bg },
     logoText: { fontSize: '22px', fontWeight: '800', letterSpacing: '-0.5px', color: theme.textMain, margin: 0 },
     mainContainer: { flex: 1, display: 'flex', justifyContent: 'center', padding: '40px 20px' },
     card: { width: '100%', maxWidth: '700px', backgroundColor: theme.cardBg, borderRadius: '24px', border: `1px solid ${theme.border}`, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', padding: '40px' },
@@ -134,25 +137,26 @@ function App() {
 
           {successo ? (
             <div style={{ textAlign: 'center', padding: '40px 0' }}>
-              <div style={s.successIcon}>✓</div>
-              <h2 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '16px' }}>Richiesta Ricevuta!</h2>
+              <div style={s.successIcon}>🤖</div>
+              <h2 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '16px' }}>Elaborazione Completata!</h2>
               <p style={{ color: theme.textMuted, fontSize: '16px', lineHeight: '1.6', marginBottom: '32px' }}>
-                Grazie <strong style={{color: theme.textMain}}>{tipoCliente === 'azienda' ? ragioneSociale : nome}</strong>.<br/>
-                Un nostro esperto ti contatterà <strong style={{color: theme.textMain}}>entro 48 ore</strong>.
+                Grazie <strong style={{color: theme.textMain}}>{tipoCliente === 'azienda' ? ragioneSociale : nome}</strong>.<br/><br/>
+                La nostra AI sta già svolgendo il suo lavoro. Invierà lei direttamente la richiesta alla fornitura scelta. 
+                <strong style={{color: theme.primary}}> Verrai contattato entro 48 ore</strong> per finalizzare l'attivazione.
               </p>
               <button onClick={() => window.location.reload()} style={{...s.btnPrimary, background: theme.border, boxShadow: 'none'}}>Torna alla home</button>
             </div>
           ) : (
             <>
               <h2 style={s.heroTitle}>Chiedi all'AI di confrontare</h2>
-              <p style={s.heroSub}>Scopri in 1 minuto quanto puoi risparmiare su energia e telefonia.</p>
+              <p style={s.heroSub}>Scopri in 1 minuto quanto puoi risparmiare.</p>
 
               <form onSubmit={gestisciInvio}>
                 <div style={s.sectionTitle}>1. Cosa vuoi confrontare?</div>
                 <div style={s.radioGroup}>
                   <label style={s.radioLabel}>
                     <input type="radio" value="energia" checked={tipoServizio === 'energia'} onChange={() => setTipoServizio('energia')} />
-                    ⚡ Energia (Luce/Gas)
+                    ⚡ Energia
                   </label>
                   <label style={s.radioLabel}>
                     <input type="radio" value="telefonia" checked={tipoServizio === 'telefonia'} onChange={() => setTipoServizio('telefonia')} />
@@ -165,7 +169,7 @@ function App() {
                   <div style={s.col}>
                     <label style={s.label}>Tipo di pratica</label>
                     <select style={s.input} value={tipoPratica} onChange={(e) => setTipoPratica(e.target.value)}>
-                      <option value="Switch">Switch (Cambio Fornitore)</option>
+                      <option value="Switch">Switch</option>
                       <option value="Nuova Attivazione">Nuova Attivazione</option>
                       <option value="Subentro">Subentro</option>
                       <option value="Voltura">Voltura</option>
@@ -175,7 +179,7 @@ function App() {
                     <label style={s.label}>Sei un...</label>
                     <select style={s.input} value={tipoCliente} onChange={(e) => setTipoCliente(e.target.value)}>
                       <option value="privato">Privato</option>
-                      <option value="azienda">Azienda (P.IVA)</option>
+                      <option value="azienda">Azienda</option>
                     </select>
                   </div>
                 </div>
@@ -204,8 +208,21 @@ function App() {
                   {tipoCliente === 'privato' && (
                      <div style={s.col}><label style={s.label}>Codice Fiscale</label><input type="text" style={s.input} value={codiceFiscale} onChange={(e) => setCodiceFiscale(e.target.value)} required /></div>
                   )}
-                  <div style={s.col}><label style={s.label}>Indirizzo</label><input type="text" style={s.input} value={residenza} onChange={(e) => setResidenza(e.target.value)} placeholder="Via, Civico, Città" required /></div>
+                  <div style={s.col}><label style={s.label}>Indirizzo</label><input type="text" style={s.input} value={residenza} onChange={(e) => setResidenza(e.target.value)} required /></div>
                 </div>
+
+                {/* CARICAMENTO FATTURA OPZIONALE */}
+                {tipoServizio === 'energia' && (
+                  <div style={{...s.col, marginTop: '10px'}}>
+                    <label style={s.label}>Carica una bolletta (Opzionale)</label>
+                    <input 
+                      type="file" 
+                      onChange={(e) => setFileBolletta(e.target.files[0])} 
+                      style={{...s.input, padding: '10px'}} 
+                      accept=".pdf,.jpg,.png"
+                    />
+                  </div>
+                )}
 
                 <button type="submit" disabled={loading} style={s.btnPrimary}>
                   {loading ? 'Analisi in corso...' : 'Confronta Offerte'}
